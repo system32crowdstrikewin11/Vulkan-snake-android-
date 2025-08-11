@@ -40,8 +40,6 @@ jobs:
     - name: CMake Build
       run: cmake --build build
 
-    # --- THE FIX: Use the correct directory name 'apk_contents' consistently ---
-
     - name: Prepare APK Contents
       run: |
         mkdir -p apk_contents/lib/arm64-v8a
@@ -64,8 +62,10 @@ jobs:
         echo '    </application>' >> apk_contents/AndroidManifest.xml
         echo '</manifest>' >> apk_contents/AndroidManifest.xml
 
+    # --- THE FIX: Correctly package the APK in one step ---
     - name: Package Unsigned APK
       run: |
+        # Use the -A flag to point aapt2 to the directory containing our assets (the lib folder)
         $ANDROID_HOME/build-tools/33.0.1/aapt2 link --proto-format -o unsigned.apk \
           -I $ANDROID_HOME/platforms/android-26/android.jar \
           --manifest apk_contents/AndroidManifest.xml \
