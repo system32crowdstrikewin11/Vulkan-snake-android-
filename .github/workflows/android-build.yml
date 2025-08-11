@@ -66,16 +66,11 @@ jobs:
 
     - name: Package Unsigned APK
       run: |
-        # Use aapt2 to create the initial APK shell, which handles the manifest correctly.
-        $ANDROID_HOME/build-tools/33.0.1/aapt2 link -o unsigned.apk \
-          -I $ANDROID_HOME/platforms/android-26/android.jar \
-          --manifest apk_contents/AndroidManifest.xml \
-          --no-auto-version
-        
-        # Manually add the native libraries using the zip utility.
-        # This prevents the 'Is a directory' error by not passing the directory to aapt2.
-        zip -r -u unsigned.apk apk_contents/lib/
-        
+        # Change to the new directory
+        cd apk_contents
+        # Zip all contents of the current directory into the final unsigned APK
+        zip -r ../unsigned.apk .
+
     - name: Generate Debug Key
       run: |
         keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
