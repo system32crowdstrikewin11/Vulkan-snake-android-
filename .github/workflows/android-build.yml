@@ -40,9 +40,11 @@ jobs:
     - name: CMake Build
       run: cmake --build build
 
-    - name: Create APK Structure
+    - name: Create APK Structure and Copy Library
       run: |
+        # Create the directory for the 64-bit ARM library
         mkdir -p apk/lib/arm64-v8a
+        # Copy the compiled shared library into the new directory
         cp build/libVulkanSnake.so apk/lib/arm64-v8a/
 
     - name: Create AndroidManifest
@@ -63,20 +65,22 @@ jobs:
     - name: Package Unsigned APK
       run: |
         $ANDROID_HOME/build-tools/33.0.1/aapt2 compile --dir apk -o compiled_res.zip
-        $ANDROID_HOME/build-tools/33.0.1/aapt2 link -o unsigned.apk -I $ANDROID_HOME/platforms/android-26/android.jar --manifest apk/AndroidManifest.xml -R compiled_res.zip --no-auto-version
+        $ANDROID_HOME/build-tools/33.0.1/aapt2 link -o unsigned.apk \
+          -I $ANDROID_HOME/platforms/android-26/android.jar \
+          --manifest apk/AndroidManifest.xml \
+          -R compiled_res.zip \
+          --lib-path apk/lib \
+          --no-auto-version \
+          --no-proto-format
 
-    # --- THE FIX ---
-    # 1. Generate a debug signing key
     - name: Generate Debug Key
       run: |
         keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
 
-    # 2. Sign the APK with the debug key
     - name: Sign APK
       run: |
         $ANDROID_HOME/build-tools/33.0.1/apksigner sign --ks debug.keystore --ks-pass pass:android --out signed.apk unsigned.apk
 
-    # 3. Upload the FINAL, signed APK
     - name: Upload Signed APK
       uses: actions/upload-artifact@v4
       with:
