@@ -1,7 +1,18 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.14)
 
 # Project Name
 project(VulkanSnake)
+
+# --- NEW: Add GLM dependency ---
+# This will automatically download the GLM library if it's not found
+include(FetchContent)
+FetchContent_Declare(
+  glm
+  GIT_REPOSITORY https://github.com/g-truc/glm.git
+  GIT_TAG 0.9.9.8
+)
+FetchContent_MakeAvailable(glm)
+# --- End of new section ---
 
 # Add the C++ source file to the project
 add_library(
@@ -15,7 +26,6 @@ find_library(log-lib log)
 find_library(android-lib android)
 
 # Find and link the Vulkan library
-# The NDK provides a pre-built Vulkan loader library
 find_library(vulkan-lib vulkan)
 
 # Link all the necessary libraries to our game
@@ -24,4 +34,5 @@ target_link_libraries(
     ${log-lib}
     ${android-lib}
     ${vulkan-lib}
+    glm # Link the GLM library we just downloaded
 )
