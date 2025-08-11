@@ -66,15 +66,17 @@ jobs:
 
     - name: Compile Resources
       run: |
-        $ANDROID_HOME/build-tools/33.0.1/aapt2 compile --dir res -o compiled_res.zip
+        # Compile the manifest into a binary file
+        $ANDROID_HOME/build-tools/33.0.1/aapt2 compile res/AndroidManifest.xml -o AndroidManifest.xml.flat
+        # Compile any other resources (if you had them)
+        # $ANDROID_HOME/build-tools/33.0.1/aapt2 compile --dir res/ -o compiled_res.zip
 
     - name: Package Unsigned APK
       run: |
         # Create a temporary directory to assemble the APK contents
         mkdir -p unsigned_apk_contents
-        # Move the compiled resources and manifest into the temporary directory
-        mv compiled_res.zip unsigned_apk_contents/
-        mv res/AndroidManifest.xml unsigned_apk_contents/
+        # Move the compiled manifest into the temporary directory with its correct name
+        mv AndroidManifest.xml.flat unsigned_apk_contents/AndroidManifest.xml
         # Move the native libraries into the correct 'lib' folder inside the temporary directory
         mkdir -p unsigned_apk_contents/lib
         mv lib/arm64-v8a unsigned_apk_contents/lib/
