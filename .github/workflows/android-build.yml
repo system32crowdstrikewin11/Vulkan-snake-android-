@@ -40,8 +40,6 @@ jobs:
     - name: CMake Build
       run: cmake --build build
 
-    # --- THE FIX: Isolate APK contents and add version info ---
-
     - name: Prepare APK Contents
       run: |
         mkdir -p apk/lib/arm64-v8a
@@ -50,7 +48,7 @@ jobs:
     - name: Create AndroidManifest with Version
       run: |
         echo '<?xml version="1.0" encoding="utf-8"?>' > apk/AndroidManifest.xml
-        echo '<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.example.vulkansnake" android:versionCode="1" android:versionName="v0.43 alpha">' >> apk/AndroidManifest.xml
+        echo '<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.example.vulkansnake" android:versionCode="1" android:versionName="v0.47 alpha">' >> apk/AndroidManifest.xml
         echo '    <uses-sdk android:minSdkVersion="26" android:targetSdkVersion="33" />' >> apk/AndroidManifest.xml
         echo '    <uses-feature android:name="android.hardware.vulkan.level" android:version="0" android:required="true" />' >> apk/AndroidManifest.xml
         echo '    <application android:hasCode="false" android:label="Vulkan Snake">' >> apk/AndroidManifest.xml
@@ -66,13 +64,11 @@ jobs:
 
     - name: Package Unsigned APK
       run: |
-        # Use aapt2 to create the initial APK shell. It only needs the manifest.
-        $ANDROID_HOME/build-tools/33.0.1/aapt2 link -o unsigned.apk \
-          -I $ANDROID_HOME/platforms/android-26/android.jar \
-          --manifest apk/AndroidManifest.xml \
-          --no-auto-version
+        # Create the initial APK shell from the manifest
+        $ANDROID_HOME/build-tools/33.0.1/aapt2 link --proto-format -o unsigned.apk -I $ANDROID_HOME/platforms/android-26/android.jar --manifest apk/AndroidManifest.xml --no-auto-version
         
-        # Now, add our native library to the APK using the zip utility.
+        # --- THE FIX ---
+        # Change into the 'apk' directory and add the 'lib' folder to the zip archive, preserving the path structure.
         cd apk && zip -r ../unsigned.apk lib && cd ..
 
     - name: Generate Debug Key
