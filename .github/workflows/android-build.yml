@@ -70,7 +70,6 @@ jobs:
           --manifest apk/AndroidManifest.xml \
           -R compiled_res.zip \
           --no-auto-version \
-          --no-proto-format \
           apk/lib
 
     - name: Generate Debug Key
