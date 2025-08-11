@@ -69,9 +69,9 @@ jobs:
           -I $ANDROID_HOME/platforms/android-26/android.jar \
           --manifest apk/AndroidManifest.xml \
           -R compiled_res.zip \
-          --lib-path apk/lib \
           --no-auto-version \
-          --no-proto-format
+          --no-proto-format \
+          apk/lib
 
     - name: Generate Debug Key
       run: |
