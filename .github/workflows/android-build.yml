@@ -42,36 +42,36 @@ jobs:
 
     - name: Create APK Structure and Copy Library
       run: |
-        # Create a separate 'lib' directory at the root level
+        # Create a separate 'lib' directory at the root level for native libraries
         mkdir -p lib/arm64-v8a
         # Copy the compiled shared library into the new directory
         cp build/libVulkanSnake.so lib/arm64-v8a/
-        # Create the 'apk' directory for resources and the manifest
-        mkdir -p apk
+        # Create the 'res' directory for resources and the manifest
+        mkdir -p res
 
     - name: Create AndroidManifest
       run: |
-        echo '<?xml version="1.0" encoding="utf-8"?>' > apk/AndroidManifest.xml
-        echo '<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.example.vulkansnake">' >> apk/AndroidManifest.xml
-        echo '    <application android:hasCode="false" android:label="Vulkan Snake">' >> apk/AndroidManifest.xml
-        echo '        <activity android:name="android.app.NativeActivity" android:exported="true">' >> apk/AndroidManifest.xml
-        echo '            <meta-data android:name="android.app.lib_name" android:value="VulkanSnake" />' >> apk/AndroidManifest.xml
-        echo '            <intent-filter>' >> apk/AndroidManifest.xml
-        echo '                <action android:name="android.intent.action.MAIN" />' >> apk/AndroidManifest.xml
-        echo '                <category android:name="android.intent.category.LAUNCHER" />' >> apk/AndroidManifest.xml
-        echo '            </intent-filter>' >> apk/AndroidManifest.xml
-        echo '        </activity>' >> apk/AndroidManifest.xml
-        echo '    </application>' >> apk/AndroidManifest.xml
-        echo '</manifest>' >> apk/AndroidManifest.xml
+        echo '<?xml version="1.0" encoding="utf-8"?>' > res/AndroidManifest.xml
+        echo '<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.example.vulkansnake">' >> res/AndroidManifest.xml
+        echo '    <application android:hasCode="false" android:label="Vulkan Snake">' >> res/AndroidManifest.xml
+        echo '        <activity android:name="android.app.NativeActivity" android:exported="true">' >> res/AndroidManifest.xml
+        echo '            <meta-data android:name="android.app.lib_name" android:value="VulkanSnake" />' >> res/AndroidManifest.xml
+        echo '            <intent-filter>' >> res/AndroidManifest.xml
+        echo '                <action android:name="android.intent.action.MAIN" />' >> res/AndroidManifest.xml
+        echo '                <category android:name="android.intent.category.LAUNCHER" />' >> res/AndroidManifest.xml
+        echo '            </intent-filter>' >> res/AndroidManifest.xml
+        echo '        </activity>' >> res/AndroidManifest.xml
+        echo '    </application>' >> res/AndroidManifest.xml
+        echo '</manifest>' >> res/AndroidManifest.xml
 
     - name: Package Unsigned APK
       run: |
-        # Compile the resources from the 'apk' directory (manifest)
-        $ANDROID_HOME/build-tools/33.0.1/aapt2 compile --dir apk -o compiled_res.zip
+        # Compile the resources from the 'res' directory (manifest)
+        $ANDROID_HOME/build-tools/33.0.1/aapt2 compile --dir res -o compiled_res.zip
         # Link the compiled resources with the manifest and native libraries from the 'lib' directory
         $ANDROID_HOME/build-tools/33.0.1/aapt2 link -o unsigned.apk \
           -I $ANDROID_HOME/platforms/android-26/android.jar \
-          --manifest apk/AndroidManifest.xml \
+          --manifest res/AndroidManifest.xml \
           -R compiled_res.zip \
           --no-auto-version \
           lib
