@@ -64,11 +64,12 @@ jobs:
         echo '    </application>' >> res/AndroidManifest.xml
         echo '</manifest>' >> res/AndroidManifest.xml
 
-    - name: Package Unsigned APK
+    - name: Compile Resources
       run: |
-        # Compile the resources from the 'res' directory (manifest)
         $ANDROID_HOME/build-tools/33.0.1/aapt2 compile --dir res -o compiled_res.zip
-        # Link the compiled resources with the manifest and native libraries from the 'lib' directory
+
+    - name: Link APK
+      run: |
         $ANDROID_HOME/build-tools/33.0.1/aapt2 link -o unsigned.apk \
           -I $ANDROID_HOME/platforms/android-26/android.jar \
           --manifest res/AndroidManifest.xml \
