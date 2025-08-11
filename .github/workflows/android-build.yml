@@ -70,8 +70,17 @@ jobs:
 
     - name: Package Unsigned APK
       run: |
-        # Package the manifest, compiled resources, and native libraries using the zip utility
-        zip -r unsigned.apk compiled_res.zip res/AndroidManifest.xml lib/
+        # Create a temporary directory to assemble the APK contents
+        mkdir -p unsigned_apk_contents
+        # Move the compiled resources and manifest into the temporary directory
+        mv compiled_res.zip unsigned_apk_contents/
+        mv res/AndroidManifest.xml unsigned_apk_contents/
+        # Move the native libraries into the correct 'lib' folder inside the temporary directory
+        mkdir -p unsigned_apk_contents/lib
+        mv lib/arm64-v8a unsigned_apk_contents/lib/
+        # Zip the contents of the temporary directory into the final unsigned APK
+        cd unsigned_apk_contents
+        zip -r ../unsigned.apk .
 
     - name: Generate Debug Key
       run: |
