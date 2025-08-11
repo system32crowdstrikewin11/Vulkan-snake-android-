@@ -68,14 +68,10 @@ jobs:
       run: |
         $ANDROID_HOME/build-tools/33.0.1/aapt2 compile --dir res -o compiled_res.zip
 
-    - name: Link APK
+    - name: Package Unsigned APK
       run: |
-        $ANDROID_HOME/build-tools/33.0.1/aapt2 link -o unsigned.apk \
-          -I $ANDROID_HOME/platforms/android-26/android.jar \
-          --manifest res/AndroidManifest.xml \
-          -R compiled_res.zip \
-          --no-auto-version \
-          lib
+        # Package the manifest, compiled resources, and native libraries using the zip utility
+        zip -r unsigned.apk compiled_res.zip res/AndroidManifest.xml lib/
 
     - name: Generate Debug Key
       run: |
