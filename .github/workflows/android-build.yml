@@ -66,10 +66,12 @@ jobs:
 
     - name: Package Unsigned APK
       run: |
-        # Change to the new directory
-        cd apk_contents
-        # Zip all contents of the current directory into the final unsigned APK
-        zip -r ../unsigned.apk .
+        # Use aapt2 to link all components, which also compiles the manifest to binary format
+        $ANDROID_HOME/build-tools/33.0.1/aapt2 link -o unsigned.apk \
+          -I $ANDROID_HOME/platforms/android-26/android.jar \
+          --manifest apk_contents/AndroidManifest.xml \
+          --no-auto-version \
+          apk_contents/lib
 
     - name: Generate Debug Key
       run: |
