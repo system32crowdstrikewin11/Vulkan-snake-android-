@@ -64,26 +64,17 @@ jobs:
         echo '    </application>' >> res/AndroidManifest.xml
         echo '</manifest>' >> res/AndroidManifest.xml
 
-    - name: Compile Resources
-      run: |
-        # Compile the manifest into a binary file
-        $ANDROID_HOME/build-tools/33.0.1/aapt2 compile res/AndroidManifest.xml -o AndroidManifest.xml.flat
-        # Compile any other resources (if you had them)
-        # $ANDROID_HOME/build-tools/33.0.1/aapt2 compile --dir res/ -o compiled_res.zip
-
     - name: Package Unsigned APK
       run: |
-        # Create a temporary directory to assemble the APK contents
-        mkdir -p unsigned_apk_contents
-        # Move the compiled manifest into the temporary directory with its correct name
-        mv AndroidManifest.xml.flat unsigned_apk_contents/AndroidManifest.xml
-        # Move the native libraries into the correct 'lib' folder inside the temporary directory
-        mkdir -p unsigned_apk_contents/lib
-        mv lib/arm64-v8a unsigned_apk_contents/lib/
-        # Zip the contents of the temporary directory into the final unsigned APK
-        cd unsigned_apk_contents
-        zip -r ../unsigned.apk .
-
+        # Create the APK shell, which handles the manifest correctly
+        $ANDROID_HOME/build-tools/33.0.1/aapt2 link -o unsigned.apk \
+          -I $ANDROID_HOME/platforms/android-26/android.jar \
+          --manifest res/AndroidManifest.xml \
+          --no-auto-version
+        
+        # Manually add the native libraries using the zip utility
+        zip -r -u unsigned.apk lib/
+        
     - name: Generate Debug Key
       run: |
         keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
