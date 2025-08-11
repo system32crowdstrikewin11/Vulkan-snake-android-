@@ -1,6 +1,5 @@
 name: Android CI Build
 
-# This workflow runs on every push to the main branch
 on:
   push:
     branches: [ "main" ]
@@ -9,27 +8,22 @@ on:
 
 jobs:
   build:
-    # Use the latest Ubuntu virtual machine
     runs-on: ubuntu-latest
 
     steps:
-    # 1. Check out the repository code
     - uses: actions/checkout@v3
 
-    # 2. Set up the Java Development Kit (required by Android tools)
     - name: Set up JDK 11
       uses: actions/setup-java@v3
       with:
         distribution: 'zulu'
         java-version: '11'
 
-    # 3. Set up the Android NDK
     - name: Setup Android NDK
       uses: nttld/setup-ndk@v1
       with:
         ndk-version: r25b
 
-    # 4. Create a build directory and run CMake
     - name: CMake Configure
       run: >
         cmake -B build
@@ -37,18 +31,14 @@ jobs:
         -DANDROID_ABI=arm64-v8a
         -DANDROID_PLATFORM=android-26
 
-    # 5. Build the project using CMake/Ninja
     - name: CMake Build
       run: cmake --build build
 
-    # 6. Create the APK structure and copy the compiled library
     - name: Create APK Structure
       run: |
         mkdir -p apk/lib/arm64-v8a
         cp build/libVulkanSnake.so apk/lib/arm64-v8a/
 
-    # 7. (Placeholder) Create a minimal AndroidManifest.xml
-    # A real project would have a proper manifest file in the repo
     - name: Create AndroidManifest
       run: |
         echo '<?xml version="1.0" encoding="utf-8"?>' > apk/AndroidManifest.xml
@@ -64,15 +54,15 @@ jobs:
         echo '    </application>' >> apk/AndroidManifest.xml
         echo '</manifest>' >> apk/AndroidManifest.xml
 
-    # 8. Use the Android build tools (aapt2) to package the APK
     - name: Package APK
       run: |
         $ANDROID_HOME/build-tools/33.0.1/aapt2 compile --dir apk -o compiled_res.zip
         $ANDROID_HOME/build-tools/33.0.1/aapt2 link --proto-format -o base.apk -I $ANDROID_HOME/platforms/android-26/android.jar --manifest apk/AndroidManifest.xml -R compiled_res.zip --no-auto-version
 
-    # 9. Upload the final APK as a build artifact
     - name: Upload APK
-      uses: actions/upload-artifact@v3
+      # --- THE FIX ---
+      # Updated from v3 to v4
+      uses: actions/upload-artifact@v4
       with:
         name: snake-game-apk
         path: base.apk
