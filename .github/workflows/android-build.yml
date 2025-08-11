@@ -40,41 +40,33 @@ jobs:
     - name: CMake Build
       run: cmake --build build
 
-    - name: Create APK Structure and Copy Library
+    - name: Create APK Structure
       run: |
-        # Create a new directory to hold all APK contents
-        mkdir apk_contents
-        # Create the correct 'lib' directory structure inside the new folder
-        mkdir -p apk_contents/lib/arm64-v8a
-        # Copy the compiled shared library into the correct path
-        cp build/libVulkanSnake.so apk_contents/lib/arm64-v8a/
-    
+        mkdir -p apk/lib/arm64-v8a
+        cp build/libVulkanSnake.so apk/lib/arm64-v8a/
+
     - name: Create AndroidManifest
       run: |
-        echo '<?xml version="1.0" encoding="utf-8"?>' > apk_contents/AndroidManifest.xml
-        echo '<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.example.vulkansnake">' >> apk_contents/AndroidManifest.xml
-        echo '    <application android:hasCode="false" android:label="Vulkan Snake">' >> apk_contents/AndroidManifest.xml
-        echo '        <activity android:name="android.app.NativeActivity" android:exported="true">' >> apk_contents/AndroidManifest.xml
-        echo '            <meta-data android:name="android.app.lib_name" android:value="VulkanSnake" />' >> apk_contents/AndroidManifest.xml
-        echo '            <intent-filter>' >> apk_contents/AndroidManifest.xml
-        echo '                <action android:name="android.intent.action.MAIN" />' >> apk_contents/AndroidManifest.xml
-        echo '                <category android:name="android.intent.category.LAUNCHER" />' >> apk_contents/AndroidManifest.xml
-        echo '            </intent-filter>' >> apk_contents/AndroidManifest.xml
-        echo '        </activity>' >> apk_contents/AndroidManifest.xml
-        echo '    </application>' >> apk_contents/AndroidManifest.xml
-        echo '</manifest>' >> apk_contents/AndroidManifest.xml
+        echo '<?xml version="1.0" encoding="utf-8"?>' > apk/AndroidManifest.xml
+        echo '<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.example.vulkansnake">' >> apk/AndroidManifest.xml
+        echo '    <uses-sdk android:minSdkVersion="26" android:targetSdkVersion="33" />' >> apk/AndroidManifest.xml
+        echo '    <uses-feature android:glEsVersion="0x00020000" android:required="true" />' >> apk/AndroidManifest.xml
+        echo '    <uses-feature android:name="android.hardware.vulkan.level" android:version="0" android:required="true" />' >> apk/AndroidManifest.xml
+        echo '    <application android:hasCode="false" android:label="Vulkan Snake">' >> apk/AndroidManifest.xml
+        echo '        <activity android:name="android.app.NativeActivity" android:exported="true">' >> apk/AndroidManifest.xml
+        echo '            <meta-data android:name="android.app.lib_name" android:value="VulkanSnake" />' >> apk/AndroidManifest.xml
+        echo '            <intent-filter>' >> apk/AndroidManifest.xml
+        echo '                <action android:name="android.intent.action.MAIN" />' >> apk/AndroidManifest.xml
+        echo '                <category android:name="android.intent.category.LAUNCHER" />' >> apk/AndroidManifest.xml
+        echo '            </intent-filter>' >> apk/AndroidManifest.xml
+        echo '        </activity>' >> apk/AndroidManifest.xml
+        echo '    </application>' >> apk/AndroidManifest.xml
+        echo '</manifest>' >> apk/AndroidManifest.xml
 
     - name: Package Unsigned APK
       run: |
-        # Use aapt2 to create the initial APK shell, which handles the manifest correctly.
-        $ANDROID_HOME/build-tools/33.0.1/aapt2 link -o unsigned.apk \
-          -I $ANDROID_HOME/platforms/android-26/android.jar \
-          --manifest apk_contents/AndroidManifest.xml \
-          --no-auto-version
-        
-        # Manually add the native libraries using the zip utility.
-        # This prevents the 'Is a directory' error by not passing the directory to aapt2.
-        zip -r -u unsigned.apk apk_contents/lib/
+        $ANDROID_HOME/build-tools/33.0.1/aapt2 link --proto-format -o unsigned.apk -I $ANDROID_HOME/platforms/android-26/android.jar --manifest apk/AndroidManifest.xml --no-auto-version
+        cd apk && zip -r ../unsigned.apk lib && cd ..
 
     - name: Generate Debug Key
       run: |
