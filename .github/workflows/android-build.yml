@@ -40,6 +40,8 @@ jobs:
     - name: CMake Build
       run: cmake --build build
 
+    # --- THE FIX: Use the correct directory name 'apk_contents' consistently ---
+
     - name: Prepare APK Contents
       run: |
         mkdir -p apk_contents/lib/arm64-v8a
@@ -55,17 +57,15 @@ jobs:
         echo '        <activity android:name="android.app.NativeActivity" android:exported="true">' >> apk_contents/AndroidManifest.xml
         echo '            <meta-data android:name="android.app.lib_name" android:value="VulkanSnake" />' >> apk_contents/AndroidManifest.xml
         echo '            <intent-filter>' >> apk_contents/AndroidManifest.xml
-        echo '                <action android:name="android.intent.action.MAIN" />' >> apk/AndroidManifest.xml
+        echo '                <action android:name="android.intent.action.MAIN" />' >> apk_contents/AndroidManifest.xml
         echo '                <category android:name="android.intent.category.LAUNCHER" />' >> apk_contents/AndroidManifest.xml
         echo '            </intent-filter>' >> apk_contents/AndroidManifest.xml
         echo '        </activity>' >> apk_contents/AndroidManifest.xml
         echo '    </application>' >> apk_contents/AndroidManifest.xml
         echo '</manifest>' >> apk_contents/AndroidManifest.xml
 
-    # --- THE FIX: Correctly package the APK in one step ---
     - name: Package Unsigned APK
       run: |
-        # aapt2 link can take the directory with native libs directly
         $ANDROID_HOME/build-tools/33.0.1/aapt2 link --proto-format -o unsigned.apk \
           -I $ANDROID_HOME/platforms/android-26/android.jar \
           --manifest apk_contents/AndroidManifest.xml \
