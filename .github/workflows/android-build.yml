@@ -45,11 +45,11 @@ jobs:
         mkdir -p apk_contents/lib/arm64-v8a
         cp build/libVulkanSnake.so apk_contents/lib/arm64-v8a/
 
-    - name: Create AndroidManifest with Version
+    - name: Create AndroidManifest
       run: |
         echo '<?xml version="1.0" encoding="utf-8"?>' > apk_contents/AndroidManifest.xml
-        echo '<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.example.vulkansnake" android:versionCode="1" android:versionName="v0.47 alpha">' >> apk_contents/AndroidManifest.xml
-        echo '    <uses-sdk android:minSdkVersion="26" android:targetSdkVersion="33" />' >> apk_contents/AndroidManifest.xml
+        echo '<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.example.vulkansnake">' >> apk_contents/AndroidManifest.xml
+        echo '    <uses-sdk android:minSdkVersion="26" />' >> apk_contents/AndroidManifest.xml
         echo '    <uses-feature android:name="android.hardware.vulkan.level" android:version="0" android:required="true" />' >> apk_contents/AndroidManifest.xml
         echo '    <application android:hasCode="false" android:label="Vulkan Snake">' >> apk_contents/AndroidManifest.xml
         echo '        <activity android:name="android.app.NativeActivity" android:exported="true">' >> apk_contents/AndroidManifest.xml
@@ -62,10 +62,8 @@ jobs:
         echo '    </application>' >> apk_contents/AndroidManifest.xml
         echo '</manifest>' >> apk_contents/AndroidManifest.xml
 
-    # --- THE FIX: Correctly package the APK in one step ---
     - name: Package Unsigned APK
       run: |
-        # Use the -A flag to point aapt2 to the directory containing our assets (the lib folder)
         $ANDROID_HOME/build-tools/33.0.1/aapt2 link --proto-format -o unsigned.apk \
           -I $ANDROID_HOME/platforms/android-26/android.jar \
           --manifest apk_contents/AndroidManifest.xml \
@@ -76,9 +74,13 @@ jobs:
       run: |
         keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
 
+    # --- THE FIX: Explicitly tell apksigner the min SDK version ---
     - name: Sign APK
       run: |
-        $ANDROID_HOME/build-tools/33.0.1/apksigner sign --ks debug.keystore --ks-pass pass:android --out signed.apk unsigned.apk
+        $ANDROID_HOME/build-tools/33.0.1/apksigner sign \
+          --ks debug.keystore --ks-pass pass:android \
+          --min-sdk-version 26 \
+          --out signed.apk unsigned.apk
 
     - name: Upload Signed APK
       uses: actions/upload-artifact@v4
