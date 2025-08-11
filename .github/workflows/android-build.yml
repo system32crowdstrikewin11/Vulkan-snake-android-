@@ -40,39 +40,33 @@ jobs:
     - name: CMake Build
       run: cmake --build build
 
+    - name: Prepare APK Contents
+      run: |
+        mkdir -p apk/lib/arm64-v8a
+        cp build/libVulkanSnake.so apk/lib/arm64-v8a/
+
     - name: Create AndroidManifest with Version
       run: |
-        echo '<?xml version="1.0" encoding="utf-8"?>' > AndroidManifest.xml
-        echo '<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.example.vulkansnake" android:versionCode="1" android:versionName="v0.47 alpha">' >> AndroidManifest.xml
-        echo '    <uses-sdk android:minSdkVersion="26" android:targetSdkVersion="33" />' >> AndroidManifest.xml
-        echo '    <uses-feature android:name="android.hardware.vulkan.level" android:version="0" android:required="true" />' >> AndroidManifest.xml
-        echo '    <application android:hasCode="false" android:label="Vulkan Snake">' >> AndroidManifest.xml
-        echo '        <activity android:name="android.app.NativeActivity" android:exported="true">' >> AndroidManifest.xml
-        echo '            <meta-data android:name="android.app.lib_name" android:value="VulkanSnake" />' >> AndroidManifest.xml
-        echo '            <intent-filter>' >> AndroidManifest.xml
-        echo '                <action android:name="android.intent.action.MAIN" />' >> AndroidManifest.xml
-        echo '                <category android:name="android.intent.category.LAUNCHER" />' >> AndroidManifest.xml
-        echo '            </intent-filter>' >> AndroidManifest.xml
+        # --- THE FIX: All lines now correctly write to apk/AndroidManifest.xml ---
+        echo '<?xml version="1.0" encoding="utf-8"?>' > apk/AndroidManifest.xml
+        echo '<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.example.vulkansnake" android:versionCode="1" android:versionName="v0.47 alpha">' >> apk/AndroidManifest.xml
+        echo '    <uses-sdk android:minSdkVersion="26" android:targetSdkVersion="33" />' >> apk/AndroidManifest.xml
+        echo '    <uses-feature android:name="android.hardware.vulkan.level" android:version="0" android:required="true" />' >> apk/AndroidManifest.xml
+        echo '    <application android:hasCode="false" android:label="Vulkan Snake">' >> apk/AndroidManifest.xml
+        echo '        <activity android:name="android.app.NativeActivity" android:exported="true">' >> apk/AndroidManifest.xml
+        echo '            <meta-data android:name="android.app.lib_name" android:value="VulkanSnake" />' >> apk/AndroidManifest.xml
+        echo '            <intent-filter>' >> apk/AndroidManifest.xml
+        echo '                <action android:name="android.intent.action.MAIN" />' >> apk/AndroidManifest.xml
+        echo '                <category android:name="android.intent.category.LAUNCHER" />' >> apk/AndroidManifest.xml
+        echo '            </intent-filter>' >> apk/AndroidManifest.xml
         echo '        </activity>' >> apk/AndroidManifest.xml
-        echo '    </application>' >> AndroidManifest.xml
-        echo '</manifest>' >> AndroidManifest.xml
+        echo '    </application>' >> apk/AndroidManifest.xml
+        echo '</manifest>' >> apk/AndroidManifest.xml
 
-    # --- THE FIX: Correctly Compile, Link, and Package the APK ---
     - name: Package Unsigned APK
       run: |
-        # 1. Compile the manifest into the required binary flat format
-        $ANDROID_HOME/build-tools/33.0.1/aapt2 compile -o compiled_manifest.flat --dir .
-        
-        # 2. Link the compiled manifest and platform files into a base APK.
-        #    This creates the correct structure but doesn't include our C++ code yet.
-        $ANDROID_HOME/build-tools/33.0.1/aapt2 link --proto-format -o unsigned.apk \
-          -I $ANDROID_HOME/platforms/android-26/android.jar \
-          --manifest AndroidManifest.xml \
-          -R compiled_manifest.flat \
-          --no-auto-version
-        
-        # 3. Add our compiled native library to the APK's lib folder.
-        zip -u unsigned.apk -j build/libVulkanSnake.so -d lib/arm64-v8a/
+        $ANDROID_HOME/build-tools/33.0.1/aapt2 link --proto-format -o unsigned.apk -I $ANDROID_HOME/platforms/android-26/android.jar --manifest apk/AndroidManifest.xml --no-auto-version
+        cd apk && zip -r ../unsigned.apk lib && cd ..
 
     - name: Generate Debug Key
       run: |
