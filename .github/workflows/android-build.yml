@@ -42,37 +42,35 @@ jobs:
 
     - name: Prepare APK Contents
       run: |
-        mkdir -p apk/lib/arm64-v8a
-        cp build/libVulkanSnake.so apk/lib/arm64-v8a/
+        mkdir -p apk_contents/lib/arm64-v8a
+        cp build/libVulkanSnake.so apk_contents/lib/arm64-v8a/
 
     - name: Create AndroidManifest with Version
       run: |
-        echo '<?xml version="1.0" encoding="utf-8"?>' > apk/AndroidManifest.xml
-        echo '<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.example.vulkansnake" android:versionCode="1" android:versionName="v0.47 alpha">' >> apk/AndroidManifest.xml
-        echo '    <uses-sdk android:minSdkVersion="26" android:targetSdkVersion="33" />' >> apk/AndroidManifest.xml
-        echo '    <uses-feature android:name="android.hardware.vulkan.level" android:version="0" android:required="true" />' >> apk/AndroidManifest.xml
-        echo '    <application android:hasCode="false" android:label="Vulkan Snake">' >> apk/AndroidManifest.xml
-        echo '        <activity android:name="android.app.NativeActivity" android:exported="true">' >> apk/AndroidManifest.xml
-        echo '            <meta-data android:name="android.app.lib_name" android:value="VulkanSnake" />' >> apk/AndroidManifest.xml
-        echo '            <intent-filter>' >> apk/AndroidManifest.xml
+        echo '<?xml version="1.0" encoding="utf-8"?>' > apk_contents/AndroidManifest.xml
+        echo '<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.example.vulkansnake" android:versionCode="1" android:versionName="v0.47 alpha">' >> apk_contents/AndroidManifest.xml
+        echo '    <uses-sdk android:minSdkVersion="26" android:targetSdkVersion="33" />' >> apk_contents/AndroidManifest.xml
+        echo '    <uses-feature android:name="android.hardware.vulkan.level" android:version="0" android:required="true" />' >> apk_contents/AndroidManifest.xml
+        echo '    <application android:hasCode="false" android:label="Vulkan Snake">' >> apk_contents/AndroidManifest.xml
+        echo '        <activity android:name="android.app.NativeActivity" android:exported="true">' >> apk_contents/AndroidManifest.xml
+        echo '            <meta-data android:name="android.app.lib_name" android:value="VulkanSnake" />' >> apk_contents/AndroidManifest.xml
+        echo '            <intent-filter>' >> apk_contents/AndroidManifest.xml
         echo '                <action android:name="android.intent.action.MAIN" />' >> apk/AndroidManifest.xml
-        echo '                <category android:name="android.intent.category.LAUNCHER" />' >> apk/AndroidManifest.xml
-        echo '            </intent-filter>' >> apk/AndroidManifest.xml
-        echo '        </activity>' >> apk/AndroidManifest.xml
-        echo '    </application>' >> apk/AndroidManifest.xml
-        echo '</manifest>' >> apk/AndroidManifest.xml
+        echo '                <category android:name="android.intent.category.LAUNCHER" />' >> apk_contents/AndroidManifest.xml
+        echo '            </intent-filter>' >> apk_contents/AndroidManifest.xml
+        echo '        </activity>' >> apk_contents/AndroidManifest.xml
+        echo '    </application>' >> apk_contents/AndroidManifest.xml
+        echo '</manifest>' >> apk_contents/AndroidManifest.xml
 
-    # --- THE FIX: Correctly Compile, Link, and Package the APK ---
+    # --- THE FIX: Correctly package the APK in one step ---
     - name: Package Unsigned APK
       run: |
-        # 1. Create the base APK with the compiled manifest.
+        # aapt2 link can take the directory with native libs directly
         $ANDROID_HOME/build-tools/33.0.1/aapt2 link --proto-format -o unsigned.apk \
           -I $ANDROID_HOME/platforms/android-26/android.jar \
-          --manifest apk/AndroidManifest.xml \
+          --manifest apk_contents/AndroidManifest.xml \
+          -A apk_contents \
           --no-auto-version
-        
-        # 2. Add our compiled native library to the APK's lib folder without corrupting the manifest.
-        cd apk && zip -u ../unsigned.apk lib/arm64-v8a/libVulkanSnake.so && cd ..
 
     - name: Generate Debug Key
       run: |
