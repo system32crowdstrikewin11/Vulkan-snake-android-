@@ -27,8 +27,6 @@ jobs:
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
 
-    # --- THE FIX ---
-    # Explicitly install the platform tools for the API level we are targeting
     - name: Install Build Tools and Platform
       run: sdkmanager "platforms;android-26" "build-tools;33.0.1"
 
@@ -62,13 +60,25 @@ jobs:
         echo '    </application>' >> apk/AndroidManifest.xml
         echo '</manifest>' >> apk/AndroidManifest.xml
 
-    - name: Package APK
+    - name: Package Unsigned APK
       run: |
         $ANDROID_HOME/build-tools/33.0.1/aapt2 compile --dir apk -o compiled_res.zip
-        $ANDROID_HOME/build-tools/33.0.1/aapt2 link --proto-format -o base.apk -I $ANDROID_HOME/platforms/android-26/android.jar --manifest apk/AndroidManifest.xml -R compiled_res.zip --no-auto-version
+        $ANDROID_HOME/build-tools/33.0.1/aapt2 link --proto-format -o unsigned.apk -I $ANDROID_HOME/platforms/android-26/android.jar --manifest apk/AndroidManifest.xml -R compiled_res.zip --no-auto-version
 
-    - name: Upload APK
+    # --- THE FIX ---
+    # 1. Generate a debug signing key
+    - name: Generate Debug Key
+      run: |
+        keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+
+    # 2. Sign the APK with the debug key
+    - name: Sign APK
+      run: |
+        $ANDROID_HOME/build-tools/33.0.1/apksigner sign --ks debug.keystore --ks-pass pass:android --out signed.apk unsigned.apk
+
+    # 3. Upload the FINAL, signed APK
+    - name: Upload Signed APK
       uses: actions/upload-artifact@v4
       with:
-        name: snake-game-apk
-        path: base.apk
+        name: snake-game-signed-apk
+        path: signed.apk
