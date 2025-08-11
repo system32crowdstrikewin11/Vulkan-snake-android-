@@ -42,39 +42,35 @@ jobs:
 
     - name: Create APK Structure and Copy Library
       run: |
-        # Create a separate 'lib' directory at the root level for native libraries
-        mkdir -p lib/arm64-v8a
-        # Copy the compiled shared library into the new directory
-        cp build/libVulkanSnake.so lib/arm64-v8a/
-        # Create the 'res' directory for resources and the manifest
-        mkdir -p res
-
+        # Create a new directory to hold all APK contents
+        mkdir apk_contents
+        # Create the correct 'lib' directory structure inside the new folder
+        mkdir -p apk_contents/lib/arm64-v8a
+        # Copy the compiled shared library into the correct path
+        cp build/libVulkanSnake.so apk_contents/lib/arm64-v8a/
+    
     - name: Create AndroidManifest
       run: |
-        echo '<?xml version="1.0" encoding="utf-8"?>' > res/AndroidManifest.xml
-        echo '<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.example.vulkansnake">' >> res/AndroidManifest.xml
-        echo '    <application android:hasCode="false" android:label="Vulkan Snake">' >> res/AndroidManifest.xml
-        echo '        <activity android:name="android.app.NativeActivity" android:exported="true">' >> res/AndroidManifest.xml
-        echo '            <meta-data android:name="android.app.lib_name" android:value="VulkanSnake" />' >> res/AndroidManifest.xml
-        echo '            <intent-filter>' >> res/AndroidManifest.xml
-        echo '                <action android:name="android.intent.action.MAIN" />' >> res/AndroidManifest.xml
-        echo '                <category android:name="android.intent.category.LAUNCHER" />' >> res/AndroidManifest.xml
-        echo '            </intent-filter>' >> res/AndroidManifest.xml
-        echo '        </activity>' >> res/AndroidManifest.xml
-        echo '    </application>' >> res/AndroidManifest.xml
-        echo '</manifest>' >> res/AndroidManifest.xml
+        echo '<?xml version="1.0" encoding="utf-8"?>' > apk_contents/AndroidManifest.xml
+        echo '<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.example.vulkansnake">' >> apk_contents/AndroidManifest.xml
+        echo '    <application android:hasCode="false" android:label="Vulkan Snake">' >> apk_contents/AndroidManifest.xml
+        echo '        <activity android:name="android.app.NativeActivity" android:exported="true">' >> apk_contents/AndroidManifest.xml
+        echo '            <meta-data android:name="android.app.lib_name" android:value="VulkanSnake" />' >> apk_contents/AndroidManifest.xml
+        echo '            <intent-filter>' >> apk_contents/AndroidManifest.xml
+        echo '                <action android:name="android.intent.action.MAIN" />' >> apk_contents/AndroidManifest.xml
+        echo '                <category android:name="android.intent.category.LAUNCHER" />' >> apk_contents/AndroidManifest.xml
+        echo '            </intent-filter>' >> apk_contents/AndroidManifest.xml
+        echo '        </activity>' >> apk_contents/AndroidManifest.xml
+        echo '    </application>' >> apk_contents/AndroidManifest.xml
+        echo '</manifest>' >> apk_contents/AndroidManifest.xml
 
     - name: Package Unsigned APK
       run: |
-        # Create the APK shell, which handles the manifest correctly
-        $ANDROID_HOME/build-tools/33.0.1/aapt2 link -o unsigned.apk \
-          -I $ANDROID_HOME/platforms/android-26/android.jar \
-          --manifest res/AndroidManifest.xml \
-          --no-auto-version
-        
-        # Manually add the native libraries using the zip utility
-        zip -r -u unsigned.apk lib/
-        
+        # Change to the new directory
+        cd apk_contents
+        # Zip all contents of the current directory into the final unsigned APK
+        zip -r ../unsigned.apk .
+
     - name: Generate Debug Key
       run: |
         keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
